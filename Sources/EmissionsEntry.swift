@@ -16,12 +16,9 @@ public struct EmissionsEntry: To {
     }
 
     public func to() -> JSON {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "YYYY-MM-DDThh:mm:ss.s"
-        formatter.timeZone = TimeZone(identifier: "UTC")
 
         var json: JSON = [
-            "entered": formatter.string(from: entered),
+            "entered": DateTime.toString(date: entered),
             "source": source.to()
         ]
         var emissions: [String:Int] = [:]
@@ -33,12 +30,8 @@ public struct EmissionsEntry: To {
     }
 
     public static func from(obj: JSON) -> EmissionsEntry {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "YYYY-MM-DDThh:mm:ss.s"
-        formatter.timeZone = TimeZone(identifier: "UTC")
         //TODO This assumes that entered exists
-        let enteredDate = formatter.date(from: obj["entered"].string!)
-
+        let enteredDate = DateTime.asDate(date: obj["entered"].string!)
         let source = EntrySource.from(obj: obj["source"])
 
         var emissions: [Emission:Int] = [:]

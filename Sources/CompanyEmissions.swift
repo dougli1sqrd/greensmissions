@@ -33,13 +33,10 @@ public struct CompanyEmissions: To, From {
     }
 
     public func to() -> JSON {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd hh:mm:ss"
-        formatter.timeZone = TimeZone(identifier: "UTC")
 
         var json: JSON = [
             "name": self.name,
-            "last_updated": formatter.string(from: lastUpdated)
+            "last_updated": DateTime.toString(date: lastUpdated)
         ]
 
         for (year, entries) in self.emissions {
@@ -53,11 +50,8 @@ public struct CompanyEmissions: To, From {
     }
 
     public static func from(obj: JSON) -> CompanyEmissions {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd hh:mm:ss"
-        formatter.timeZone = TimeZone(identifier: "UTC")
         //TODO Bad, we're assuming this works
-        let updated = formatter.date(from: obj["last_updated"].stringValue)!
+        let updated = DateTime.asDate(date: obj["last_updated"].stringValue)!
 
         var emissionsByYear: [Int:[EmissionsEntry]] = [:]
         for (year, emissionsEntriesJson): (String, JSON) in obj["emissions"] {
