@@ -73,10 +73,15 @@ struct ViewCompany<S: CompanyEmissionsService>: Route {
         Log.info("handling \(method): \(path)")
         let companyParam = request.parameters["companyName"] ?? "none" //should 404?
 
-        if let company = service.viewEmissionsFor(company: companyParam) {
-            response.send(json: company.to())
-        } else {
-            response.status(.notFound)
+        switch service.viewEmissionsFor(company: companyParam) {
+        case let .Ok(companyEmissoins):
+            response.send(json: companyEmissoins.to())
+        case let .Err(serviceError):
+            Log.info("found \(serviceError) error")
+            switch serviceError {
+            case let .noSuchCompany(askedFor):
+                response.status(.notFound).send(json: ApiError(status: 404, problem: "No such company \(askedFor)").to())
+            }
         }
         next()
     }

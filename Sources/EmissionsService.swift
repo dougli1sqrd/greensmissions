@@ -6,7 +6,7 @@ public protocol CompanyEmissionsService {
 
     func makeCompany(name: String) -> CompanyEmissions
 
-    func viewEmissionsFor(company name: String) -> CompanyEmissions?
+    func viewEmissionsFor(company name: String) -> Result<CompanyEmissions, ServiceError>
 
     func addEmissionsEntryTo(company name: String, during year: Int, source: EntrySource, yearlyEmissions: [Emission: Int]) -> EmissionsEntry?
 
@@ -37,8 +37,12 @@ class MemoryCompanyEmissionsService: CompanyEmissionsService {
         return newCompany
     }
 
-    func viewEmissionsFor(company name: String) -> CompanyEmissions? {
-        return companyEmissions[name]
+    func viewEmissionsFor(company name: String) -> Result<CompanyEmissions, ServiceError> {
+        if let theCompany = companyEmissions[name] {
+            return .Ok(theCompany)
+        } else {
+            return .Err(.noSuchCompany(askedFor: name))
+        }
     }
 
     func addEmissionsEntryTo(company name: String, during year: Int, source: EntrySource, yearlyEmissions: [Emission:Int]) -> EmissionsEntry? {
@@ -127,4 +131,8 @@ class MemoryCompanyEmissionsService: CompanyEmissionsService {
             return nil
         }
     }
+}
+
+public enum ServiceError: Error {
+    case noSuchCompany(askedFor: String)
 }
