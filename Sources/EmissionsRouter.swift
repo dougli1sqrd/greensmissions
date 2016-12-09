@@ -32,9 +32,16 @@ protocol Route {
 
     func handler(request: RouterRequest, response: RouterResponse, next: NextType)
 
-    // static func build() -> Route {
-    //
-    // }
+}
+
+func handleResult<J:To>(_ result: Result<J, ServiceError>, response: RouterResponse) where J.T == JSON {
+    switch result {
+    case let .Ok(jsonable):
+        response.send(json: jsonable.to())
+    case let .Err(serviceError):
+        let err = HTTPError.buildFrom(error: serviceError)
+        response.status(err.httpStatus).send(json: err.to())
+    }
 }
 
 struct NewCompanyRoute<S: CompanyEmissionsService>: Route {
@@ -51,13 +58,7 @@ struct NewCompanyRoute<S: CompanyEmissionsService>: Route {
         Log.info("handling \(method): \(path)")
         if let name = request.queryParameters["name"] {
             Log.info("Name found: \(name)")
-            switch service.makeCompany(name: name) {
-            case let .Ok(companyEmissions):
-                response.send(json: companyEmissions.to())
-            case let.Err(serviceError):
-                let err = HTTPError.buildFrom(error: serviceError)
-                response.status(err.httpStatus).send(json: err.to())
-            }
+            handleResult(service.makeCompany(name: name), response: response)
         } else {
             let problem = "Query parameter in the form of \'?name=SomeCompanyName\' on the URL is requried to create a new company."
             let badQuery = HTTPError(status: .badRequest, problem: problem)
@@ -80,15 +81,7 @@ struct ViewCompany<S: CompanyEmissionsService>: Route {
     func handler(request: RouterRequest, response: RouterResponse, next: NextType) {
         Log.info("handling \(method): \(path)")
         let companyParam = request.parameters["companyName"] ?? "none" //should 404?
-
-        switch service.viewEmissionsFor(company: companyParam) {
-        case let .Ok(companyEmissions):
-            response.send(json: companyEmissions.to())
-        case let .Err(serviceError):
-            let err = HTTPError.buildFrom(error: serviceError)
-            response.status(err.httpStatus).send(json: err.to())
-        }
-
+        handleResult(service.viewEmissionsFor(company: companyParam), response: response)
         next()
     }
 }
