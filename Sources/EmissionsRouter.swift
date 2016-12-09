@@ -51,10 +51,17 @@ struct NewCompanyRoute<S: CompanyEmissionsService>: Route {
         Log.info("handling \(method): \(path)")
         if let name = request.queryParameters["name"] {
             Log.info("Name found: \(name)")
-            let company = service.makeCompany(name: name)
-            response.send(json: company.to())
+            switch service.makeCompany(name: name) {
+            case let .Ok(companyEmissions):
+                response.send(json: companyEmissions.to())
+            case let.Err(serviceError):
+                let err = HTTPError.buildFrom(error: serviceError)
+                response.status(err.httpStatus).send(json: err.to())
+            }
         } else {
-            response.send(json: ["name": "none"])
+            let problem = "Query parameter in the form of \'?name=SomeCompanyName\' on the URL is requried to create a new company."
+            let badQuery = HTTPError(status: .badRequest, problem: problem)
+            response.send(json: badQuery.to())
         }
         next()
     }

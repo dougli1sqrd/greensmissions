@@ -4,7 +4,7 @@ import LoggerAPI
 
 public protocol CompanyEmissionsService {
 
-    func makeCompany(name: String) -> CompanyEmissions
+    func makeCompany(name: String) -> Result<CompanyEmissions, ServiceError>
 
     func viewEmissionsFor(company name: String) -> Result<CompanyEmissions, ServiceError>
 
@@ -30,10 +30,13 @@ class MemoryCompanyEmissionsService: CompanyEmissionsService {
         self.companyEmissions = [:]
     }
 
-    func makeCompany(name: String) -> CompanyEmissions {
+    func makeCompany(name: String) -> Result<CompanyEmissions, ServiceError> {
+        if companyEmissions[name] != nil {
+            return .Err(.companyAlreadyExists(askedFor: name))
+        }
         let newCompany = CompanyEmissions(name)
         companyEmissions[name] = newCompany
-        return newCompany
+        return .Ok(newCompany)
     }
 
     func viewEmissionsFor(company name: String) -> Result<CompanyEmissions, ServiceError> {
