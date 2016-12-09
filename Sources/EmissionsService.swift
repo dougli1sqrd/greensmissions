@@ -31,7 +31,6 @@ class MemoryCompanyEmissionsService: CompanyEmissionsService {
     }
 
     func makeCompany(name: String) -> CompanyEmissions {
-        //This doesn't handle when the name already exists :(
         let newCompany = CompanyEmissions(name)
         companyEmissions[name] = newCompany
         return newCompany
@@ -135,4 +134,5 @@ class MemoryCompanyEmissionsService: CompanyEmissionsService {
 
 public enum ServiceError: Error {
     case noSuchCompany(askedFor: String)
+    case companyAlreadyExists(askedFor: String)
 }

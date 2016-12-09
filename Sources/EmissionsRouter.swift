@@ -1,4 +1,5 @@
 import Kitura
+import KituraNet
 import HeliumLogger
 import SwiftyJSON
 import HeliumLogger
@@ -74,16 +75,26 @@ struct ViewCompany<S: CompanyEmissionsService>: Route {
         let companyParam = request.parameters["companyName"] ?? "none" //should 404?
 
         switch service.viewEmissionsFor(company: companyParam) {
-        case let .Ok(companyEmissoins):
-            response.send(json: companyEmissoins.to())
+        case let .Ok(companyEmissions):
+            response.send(json: companyEmissions.to())
         case let .Err(serviceError):
-            Log.info("found \(serviceError) error")
-            switch serviceError {
-            case let .noSuchCompany(askedFor):
-                response.status(.notFound).send(json: ApiError(status: 404, problem: "No such company \(askedFor)").to())
-            }
+            let err = HTTPError.buildFrom(error: serviceError)
+            response.status(err.httpStatus).send(json: err.to())
         }
+
         next()
+    }
+}
+
+extension HTTPError {
+    static func buildFrom(error: ServiceError) -> HTTPError {
+        switch error {
+        case let .noSuchCompany(askedFor):
+            return HTTPError(status: .notFound, problem: "The company \'\(askedFor)\' does not exist")
+
+        case let .companyAlreadyExists(askedFor):
+            return HTTPError(status: .badRequest, problem: "The company \'\(askedFor)\' already exists, and cannot be created")
+        }
     }
 }
 
